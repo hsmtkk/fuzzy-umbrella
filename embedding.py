@@ -1,6 +1,6 @@
 import os
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores.documentdb import DocumentDBVectorSearch
+from langchain_community.vectorstores.documentdb import DocumentDBVectorSearch, DocumentDBSimilarityType
 from langchain_openai import OpenAIEmbeddings
 from pymongo import MongoClient
 
@@ -18,3 +18,7 @@ collection = client[mongo_db][mongo_collection]
 db = DocumentDBVectorSearch.from_documents(
     docs, embedding, collection=collection, index_name=mongo_index
 )
+
+dimensions = 1536
+similarity_algorithm = DocumentDBSimilarityType.COS
+db.create_index(dimensions, similarity_algorithm)

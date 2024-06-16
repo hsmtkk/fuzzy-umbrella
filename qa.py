@@ -17,6 +17,11 @@ mongo_index = os.environ["MONGO_INDEX"]
 
 client = MongoClient(mongo_connect_str)
 collection = client[mongo_db][mongo_collection]
+
+for x in collection.find():
+    print(x)
+    break
+
 db = DocumentDBVectorSearch.from_connection_string(
     connection_string=mongo_connect_str,
     namespace=mongo_namespace,
