@@ -1,8 +1,8 @@
+import os
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores.documentdb import DocumentDBVectorSearch
-from langchain_community.embeddings.openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from pymongo import MongoClient
-import os
 
 mongo_connect_str = os.environ["MONGO_CONNECT_STRING"]
 mongo_db = os.environ["MONGO_DB"]
