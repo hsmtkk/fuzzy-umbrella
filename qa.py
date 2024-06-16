@@ -12,13 +12,20 @@ embedding = OpenAIEmbeddings()
 mongo_connect_str = os.environ["MONGO_CONNECT_STRING"]
 mongo_db = os.environ["MONGO_DB"]
 mongo_collection = os.environ["MONGO_COLLECTION"]
+mongo_namespace = mongo_db + "." + mongo_collection
 mongo_index = os.environ["MONGO_INDEX"]
 
 client = MongoClient(mongo_connect_str)
 collection = client[mongo_db][mongo_collection]
-db = DocumentDBVectorSearch(
-    collection=collection, embedding=embedding, index_name=mongo_index
+db = DocumentDBVectorSearch.from_connection_string(
+    connection_string=mongo_connect_str,
+    namespace=mongo_namespace,
+    embedding=embedding,
+    index_name=mongo_index,
 )
+
+test_resp = db.similarity_search("ワクチンのメリット、デメリットは何か")
+print(test_resp)
 
 qa_retriever = db.as_retriever(
     search_type="similarity",
