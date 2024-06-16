@@ -1,11 +1,11 @@
 import os
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pymongo import MongoClient
 from langchain_community.vectorstores.documentdb import DocumentDBVectorSearch
 from langchain_openai import OpenAIEmbeddings
+from langchain_core.prompts import PromptTemplate
+from langchain.chains import RetrievalQA
+
 
 embedding = OpenAIEmbeddings()
 
@@ -20,25 +20,32 @@ db = DocumentDBVectorSearch(
     collection=collection, embedding=embedding, index_name=mongo_index
 )
 
-retriever = db.as_retriever()
+qa_retriever = db.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k": 25},
+)
+
 llm = ChatOpenAI()
 
-system_prompt = (
-    "Use the given context to answer the question. "
-    "If you don't know the answer, say you don't know. "
-    "Use three sentence maximum and keep the answer concise. "
-    "Context: {context}"
+prompt_template = """Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+
+{context}
+
+Question: {question}
+"""
+PROMPT = PromptTemplate(
+    template=prompt_template, input_variables=["context", "question"]
 )
-prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", system_prompt),
-        ("human", "{input}"),
-    ]
+
+qa = RetrievalQA.from_chain_type(
+    llm=llm,
+    chain_type="stuff",
+    retriever=qa_retriever,
+    return_source_documents=True,
+    chain_type_kwargs={"prompt": PROMPT},
 )
-question_answer_chain = create_stuff_documents_chain(llm, prompt)
-chain = create_retrieval_chain(retriever, question_answer_chain)
 
 while True:
-    question = input("You> ")
-    answer = chain.invoke(question)
+    query = input("You> ")
+    answer = qa.invoke({"query": query})
     print("AI> ", answer)
